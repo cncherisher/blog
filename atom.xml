@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>章玉のblog</title>
+  
+  
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="https://sztu.eu.org/"/>
+  <updated>2020-08-03T16:19:49.522Z</updated>
+  <id>https://sztu.eu.org/</id>
+  
+  <author>
+    <name>ZY</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="https://sztu.eu.org/2020/08/03/hello-world/"/>
+    <id>https://sztu.eu.org/2020/08/03/hello-world/</id>
+    <published>2020-08-03T16:19:49.522Z</published>
+    <updated>2020-08-03T16:19:49.522Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt; for more info. If you get any problems when using Hexo, you can find the answer in &lt;a href=&quot;https://hexo.io/docs/troubleshooting.html&quot;&gt;troubleshooting&lt;/a&gt; or you can ask me on &lt;a href=&quot;https://github.com/hexojs/hexo/issues&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+    
+    </summary>
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>歌词</title>
+    <link href="https://sztu.eu.org/2020/08/03/%E6%AD%8C%E8%AF%8D/2020-03-26/"/>
+    <id>https://sztu.eu.org/2020/08/03/%E6%AD%8C%E8%AF%8D/2020-03-26/</id>
+    <published>2020-08-03T16:19:49.522Z</published>
+    <updated>2020-08-03T16:19:49.522Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Title：揺らめく水面に落ちる月&lt;br&gt;Vocal：結月そら&lt;br&gt;原曲：向こう側の月 ～ Megalopolis of Moon&lt;/p&gt;
+    
+    </summary>
+    
+    
+    
+      <category term="歌词" scheme="https://sztu.eu.org/tags/%E6%AD%8C%E8%AF%8D/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>歌词2</title>
+    <link href="https://sztu.eu.org/2020/03/27/%E6%AD%8C%E8%AF%8D/2020-03-28/"/>
+    <id>https://sztu.eu.org/2020/03/27/%E6%AD%8C%E8%AF%8D/2020-03-28/</id>
+    <published>2020-03-27T16:00:00.000Z</published>
+    <updated>2020-08-03T16:19:49.522Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Title：次発 ワタシ３７号&lt;/p&gt;
+&lt;p&gt;サークル：VAGUEDGE &lt;/p&gt;
+&lt;p&gt;アルバム：東方夢叶幻想日記 &lt;/p&gt;
+    
+    </summary>
+    
+    
+    
+      <category term="歌词" scheme="https://sztu.eu.org/tags/%E6%AD%8C%E8%AF%8D/"/>
+    
+  </entry>
+  
+</feed>
