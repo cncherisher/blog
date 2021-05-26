@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        
+        var createScene = function () {
+        
+            // Low Poly Character with Blender Tutorial of Grant Abbitt: https://www.youtube.com/user/mediagabbitt
+            // Character animations by Mixamo: https://www.mixamo.com/
+        
+            engine.enableOfflineSupport = false;
+        
+            // 启用物理引擎
+            var scene = new BABYLON.Scene(engine);
+        	var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
+			var physicsPlugin = new BABYLON.CannonJSPlugin();
+			scene.enablePhysics(gravityVector, physicsPlugin);
+			
+
+
+			//var camera1 = new BABYLON.WebVRFreeCamera("camera1", new BABYLON.Vector3(0, 0, 0), scene);
+            var camera1 = new BABYLON.ArcRotateCamera("camera1", Math.PI / 2, Math.PI / 4, 10, new BABYLON.Vector3(0, 35000, 0), scene);
+            //console.log(camera1)
+            
+            scene.activeCamera = camera1;
+            scene.activeCamera.attachControl(canvas, true);
+            camera1.lowerRadiusLimit = 100;
+            camera1.upperRadiusLimit = 500;
+            camera1.wheelDeltaPercentage = 0.01;
+        
+            // Lights
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.6;
+            light.specular = BABYLON.Color3.Black();
+        
+            var light2 = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -0.5, -1.0), scene);
+            light2.position = new BABYLON.Vector3(0, 5, 5);
+        
+            // Skybox
+            /*var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+            var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox2", scene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            skyboxMaterial.diffuseColor = BABYLON.Color3.Black()
+            skyboxMaterial.specularColor = BABYLON.Color3.Black();
+            skybox.material = skyboxMaterial;*/
+        
+            // GUI
+            var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            var instructions = new BABYLON.GUI.TextBlock();
+            instructions.text = "Move w/ WASD keys, B for Samba, look with the mouse";
+            instructions.color = "white";
+            instructions.fontSize = 16;
+            instructions.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT
+            instructions.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+            advancedTexture.addControl(instructions);
+        
+        	//var environment = scene.createDefaultEnvironment({ enableGroundShadow: true, groundYBias: 2 });
+    		//environment.setMainColor(BABYLON.Color3.FromHexString("#74b9ff"))
+            // Ground
+            var vrHelper = scene.createDefaultVRExperience({createDeviceOrientationCamera:false});
+    		vrHelper.enableTeleportation({ floorMeshName: "camera1" });
+
+
+            var ground = BABYLON.MeshBuilder.CreateGround("ground", { height: 50000, width: 50000, subdivisions: 4 }, scene);
+            var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            groundMaterial.diffuseTexture = new BABYLON.Texture("textures/wood.jpg", scene);
+            groundMaterial.diffuseTexture.uScale = 30;
+            groundMaterial.diffuseTexture.vScale = 30;
+            groundMaterial.specularColor = new BABYLON.Color3(.1, .1, .1);
+            ground.material = groundMaterial;
+        	//console.log(ground)
+            // Keyboard events
+            var inputMap = {};
+            scene.actionManager = new BABYLON.ActionManager(scene);
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+        
+        	scene.collisionsEnabled = true;//碰撞
+
+
+
+            // Load hero character
+            BABYLON.SceneLoader.ImportMesh("", "", "worker.glb", scene, function (newMeshes, particleSystems, skeletons, animationGroups) {
+               	
+               	var hero = newMeshes[0];
+               	for (var i = newMeshes.length - 1; i >= 0; i--) {
+                	newMeshes[i]._scaling=new BABYLON.Vector3(1200,1200,1200)
+                }
+                //newMeshes[0]._scal
+               	hero.scaling.scaleInPlace(0.1);
+        
+                //Lock camera on the character 
+                const walkAnim = scene.getAnimationGroupByName("Walking");
+                //const walkBackAnim = scene.getAnimationGroupByName("WalkingBack");
+                const idleAnim = scene.getAnimationGroupByName("Idle");
+                const sambaAnim = scene.getAnimationGroupByName("Sambaa");
+
+                camera1.target = hero;
+                console.log(scene);
+                //console.log(newMeshes);
+
+
+                var plane = BABYLON.Mesh.CreatePlane("plane", 100);
+    			plane.parent = ground;
+    			plane.position.y = 300;
+    			var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(plane);
+
+                var button1 = BABYLON.GUI.Button.CreateSimpleButton("but1","BeginWork")
+                button1.width = 10000;
+			    button1.height = 10000;
+			    button1._scaleX=10
+			    button1._scaleY=10
+			    button1.color = "white";
+			    button1.fontSize = 50;
+			    button1.background = "green";
+			    //button1.position=new BABYLON.Vector3(-5,0,0)
+			    Point = false
+			    button1.onPointerUpObservable.add(function() {
+
+			    	Point = !Point
+
+			    	if (Point) {
+			    		
+			    		sambaAnim.start(true, 1.0, idleAnim.from, idleAnim.to, false);
+			    		idleAnim.stop()
+			    	}
+			    	if(!Point)
+			    	{
+			    		sambaAnim.stop()
+			    		idleAnim.start(true, 1.0, idleAnim.from, idleAnim.to, false);
+			    	}
+
+			        
+			    });
+			    advancedTexture.addControl(button1);
+			    //console.log("111",button1);
+            });
+            
+
+            
+            BABYLON.SceneLoader.ImportMesh("","","model/2.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(10,0,500);
+        			res[i]._scaling=new BABYLON.Vector3(0.8,0.8,0.8)
+        			res[i].checkCollisions = true;
+        		}
+        		console.log('锤子',res)
+        	});
+/*
+            BABYLON.SceneLoader.ImportMesh("","","model/加力扳手.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(30,0,200);
+        			res[i]._scaling=new BABYLON.Vector3(8,8,8)
+        			res[i].checkCollisions = true;
+        		}
+        		//console.log('锤子',res)
+        	});
+
+            BABYLON.SceneLoader.ImportMesh("","","model/螺母垫板.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(0,12,0);
+        			res[i]._scaling=new BABYLON.Vector3(0.5,0.5,0.5)
+        			res[i].checkCollisions = true;
+        			res[i]._rotation = new BABYLON.Vector3(Math.PI/2,Math.PI/2,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+            BABYLON.SceneLoader.ImportMesh("","","model/大锤.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(0,10,30);
+        			res[i]._scaling=new BABYLON.Vector3(2,2,2)
+        			res[i].checkCollisions = true;
+        			res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+            BABYLON.SceneLoader.ImportMesh("","","model/方尺.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(80,0,150);
+        			res[i]._scaling=new BABYLON.Vector3(10,10,10)
+        			res[i].checkCollisions = true;
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+
+            /*BABYLON.SceneLoader.ImportMesh("","","model/套筒扳手.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(80,0,150);
+        			res[i]._scaling=new BABYLON.Vector3(5,5,5)
+        			res[i].checkCollisions = true;
+        			res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});*/
+            /*
+        	BABYLON.SceneLoader.ImportMesh("","","model/毛刷.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(80,5,150);
+        			res[i]._scaling=new BABYLON.Vector3(3,3,3)
+        			res[i].checkCollisions = true;
+        			res[i]._rotation = new BABYLON.Vector3(Math.PI/2,Math.PI/2,Math.PI/2)
+        		}
+        		//console.log('锤子',res)
+        	});
+        	BABYLON.SceneLoader.ImportMesh("","","model/活动扳手.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(120,2,100);
+        			res[i]._scaling=new BABYLON.Vector3(3,3,3,3)
+        			//res[i].checkCollisions = true;
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+
+        	BABYLON.SceneLoader.ImportMesh("","","model/电压表.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(120,9,100);
+        			res[i]._scaling=new BABYLON.Vector3(0.3,0.3,0.3,3)
+        			//res[i].checkCollisions = true;
+        			res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+
+        	BABYLON.SceneLoader.ImportMesh("","","model/石笔.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(-15,0.5,-15);
+        			res[i]._scaling=new BABYLON.Vector3(1,1,1,3)
+        			//res[i].checkCollisions = true;
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+
+        	BABYLON.SceneLoader.ImportMesh("","","model/红闪灯.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(150,5,20);
+        			res[i]._scaling=new BABYLON.Vector3(10,10,10,3)
+        			//res[i].checkCollisions = true;
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+        	/*
+        	BABYLON.SceneLoader.ImportMesh("","","model/绝缘尺.obj",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(150,5,30);
+        			res[i]._scaling=new BABYLON.Vector3(2,2,2,3)
+        			//res[i].checkCollisions = true;
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});	
+        	BABYLON.SceneLoader.ImportMesh("","","model/螺栓板.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(250,5,50);
+        			res[i]._scaling=new BABYLON.Vector3(1,1,0.1);
+        			//res[i].checkCollisions = true;
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+        	BABYLON.SceneLoader.ImportMesh("","","model/轨缝尺.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(10,0,10);
+        			res[i]._scaling=new BABYLON.Vector3(1,1,1);
+        			//res[i].checkCollisions = true
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+        	BABYLON.SceneLoader.ImportMesh("","","model/道尺.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(-35,0,0);
+        			res[i]._scaling=new BABYLON.Vector3(10,10,10);
+        			//res[i].checkCollisions = true
+        			//res[i]._rotation = new BABYLON.Vector3(Math.PI/2,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+        	BABYLON.SceneLoader.ImportMesh("","","model/刚刷.glb",scene,function(res){
+        		for (var i = res.length - 1 ; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(100,0,100);
+        			//res[i]._scaling=new BABYLON.Vector3(1,1,1);
+        			//res[i].checkCollisions = true
+        			res[i]._rotation = new BABYLON.Vector3(Math.PI,0,0)
+        		}
+        		//console.log('锤子',res)
+        	});
+
+
+
+
+
+        	BABYLON.SceneLoader.ImportMesh("","","铁轨.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(0,-416.5,-300);
+        			if (res[i].name=="Plane001") {
+        				res[i].material=groundMaterial;
+        				console.log(res[i]._position)
+        			}
+        			res[i].checkCollisions = true;
+        		}
+        		console.log(res)
+        	});
+        	BABYLON.SceneLoader.ImportMesh("","","untitled.glb",scene,function(res){
+        		for (var i = res.length - 1; i >= 0; i--) {
+        			res[i]._position=new BABYLON.Vector3(0,50,2000);
+        			if (res[i].name=="Plane001") {
+        				res[i].material=groundMaterial;
+        				
+        				console.log(res[i]._position)
+        			}
+        			res[i].checkCollisions = true;
+        			res[i].rotation = new BABYLON.Vector3(0,Math.PI/2,0);
+        		}
+        		console.log()
+        	});
+*/
+            console.log(scene)
+            return scene;
+        }
+                var engine;
+                var scene;
+                initFunction = async function() {               
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();};
+        initFunction().then(() => {sceneToRender = scene        
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

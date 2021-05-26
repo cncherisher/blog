@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title> <!-- 网页标题 -->
+
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script> <!--pep操作插件-->
+        <script src="https://preview.babylonjs.com/ammo.js"></script><!--物理引擎插件-->
+        <script src="https://preview.babylonjs.com/cannon.js"></script><!--物理引擎插件-->
+        <script src="https://preview.babylonjs.com/Oimo.js"></script><!--物理引擎插件-->
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script><!--建模插件-->
+        <script src="https://preview.babylonjs.com/babylon.js"></script><!--巴比伦文件-->
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script><!--加载工具插件-->
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script><!--巴比伦GUI插件-->
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+        
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas> <!--定义画布canvas标签-->
+    <script>
+        //socket.io--------------------------------------------------------------------//
+      
+        var count = 0
+        var backwardsCount = 5
+        //socket.io--------------------------------------------------------------------//
+        
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = async function () {
+
+            // 代码编辑从这里开始
+            // 这将创建一个基本的巴比伦场景对象（非模型）
+            var scene = new BABYLON.Scene(engine);
+        
+            //------定义相机------------//
+            // 定义一个自由相机（在PC端使用键盘和鼠标操作）
+            var camera = new BABYLON.FreeCamera("Camera1", new BABYLON.Vector3(0, 5, 5), scene);
+            // 设置相机目标
+            camera.setTarget(BABYLON.Vector3.Zero());
+            // 相机设置被canvas控制
+            camera.attachControl(canvas, true);
+
+            //------定义灯光------------//
+        	var light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 2), scene);
+            light.diffuse = new BABYLON.Color3(1, 1, 1);
+            // 默认强度（intensity）为1, 让我们少量调暗灯光
+            light.intensity = 0.7;
+            
+            //------定义材质------------//
+            // var cement = new BABYLON.StandardMaterial("cement", scene);
+            // cement.diffuseTexture = new BABYLON.Texture("../material/水泥.jpg", scene);
+
+            //------定义地面------------//
+            // var ground = BABYLON.Mesh.CreateGround("ground", 1000, 1000, 2, scene);
+            // ground.material = cement;
+
+
+            //设置GUI
+            //GUI3D
+            var manager = new BABYLON.GUI.GUI3DManager(scene);
+            //返回按钮
+            var returnButton = new BABYLON.GUI.HolographicButton("return");
+            manager.addControl(returnButton);
+            returnButton.position =new BABYLON.Vector3(-3,0,5);
+            var returnText = new BABYLON.GUI.TextBlock();
+            returnText.text = "返回";
+            returnText.color = "White";
+            returnText.fontSize = 70;
+            returnButton.content = returnText;
+            returnButton.isVisible = true
+            returnButton.onPointerUpObservable.add(function(){
+                socket.emit('message', count)
+                count++
+            })
+            returnButton.isVisible = false
+            //关闭按钮
+            var toolsButton = new BABYLON.GUI.HolographicButton("tools");
+            manager.addControl(toolsButton);
+            toolsButton.position =new BABYLON.Vector3(0,-1.5,3.9);
+            var toolsText = new BABYLON.GUI.TextBlock();
+            toolsText.text = "关闭";
+            toolsText.color = "White";
+            toolsText.fontSize = 50;
+            toolsButton.content = toolsText;
+            toolsButton.scaling = new BABYLON.Vector3(0.6,0.6,0.6)     
+            
+            //开始按钮
+            var pauseButton = new BABYLON.GUI.HolographicButton("pause");
+            manager.addControl(pauseButton);
+            pauseButton.isVisible = false
+            pauseButton.position =new BABYLON.Vector3(0,-1.2,3.9);
+            var pauseText = new BABYLON.GUI.TextBlock();
+            pauseText.text = "开始";
+            pauseText.color = "White";
+            pauseText.fontSize = 50;
+            pauseButton.content = pauseText;
+            pauseButton.scaling = new BABYLON.Vector3(0.4,0.4,0.4) 
+            pauseButton.onPointerUpObservable.add(function(){
+                motionPlane.isVisible = false
+                pauseButton.isVisible = false
+                countBackwardsPlane.isVisible = true
+                var myCount = setInterval(function(){
+                    backwardsCount--
+                    countBackwardsText.text = backwardsCount.toString()
+                    if(backwardsCount<0){
+                        countBackwardsPlane.isVisible = false
+                        clearInterval(myCount)
+                    }
+                },1000)
+                setTimeout(function(){
+                    socket.emit('message', count)
+                    count++
+                },5000)
+            })
+            //------加载模型-----------//
+            //加载外景
+            // BABYLON.SceneLoader.ImportMesh("","../models/", "scene.glb", scene, function(newMesh){
+            //     console.log("加载外景")
+            //     //生成阴影
+            //     // var shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+	        //     // shadowGenerator.addShadowCaster(newMesh[0]);
+	        //     // shadowGenerator.useExponentialShadowMap = true;
+            //     // environment.ground.receiveShadows = true;
+            // });
+
+            //加载大接头区间
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "JointPart.glb", scene,function(newMesh){
+            //     console.log("加载大接头1")
+            // })
+
+            for (var i = 1; i <= 8; i++) {
+                BABYLON.SceneLoader.ImportMesh("","","https://cdn.jsdelivr.net/gh/hucanxu123/CDN@1.1/"+i+".glb",scene,function(res){
+                    console.log(res);
+                });
+            }
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "JointPart2.glb", scene,function(newMesh){
+            //     console.log("加载大接头2")
+            // })
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "RailPart1.glb", scene,function(newMesh){
+            //     console.log("轨道部分1")
+            // })
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "RailPart2.glb", scene,function(newMesh){
+            //     console.log("轨道部分2")
+            // })
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "RailPart3.glb", scene,function(newMesh){
+            //     console.log("轨道部分3")
+            // })
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "RailPart4.glb", scene,function(newMesh){
+            //     console.log("轨道部分4")
+            // })
+
+            //加载工具
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "impactWrench.glb", scene,function(newMesh){
+            //     console.log("冲击扳手")
+            // })
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "dingWordsWrench.glb", scene,function(newMesh){
+            //     console.log("丁字扳手")
+            // })
+
+            // BABYLON.SceneLoader.ImportMesh("", "../models/", "Pliers.glb", scene,function(newMesh){
+            //     console.log("钳子")
+            // })
+
+            //加载工人
+            // BABYLON.SceneLoader.ImportMesh("", "../models/human/", "idle.glb", scene,function(idleModel, particleSystems, skeletons, animationGroups){
+            //     console.log("站立")
+            //     var idleWorker = idleModel[0]
+            //     idleWorker.position.z-= 40
+            //     idleWorker.position.x-= 8
+            //     idleWorker.position.y-= 1.5
+            //     BABYLON.SceneLoader.ImportMesh("", "../models/human/", "qiang.glb", scene,function(fastenerModel, particleSystems, skeletons, animationGroups){
+            //             console.log("拆除螺栓")
+            //             var fastenerWorker = fastenerModel[0]
+            //             fastenerWorker.position.z-= 40
+            //             fastenerWorker.position.x-= 8
+            //             fastenerWorker.position.y-= 1.5
+            //             for(let i=0; i<fastenerModel.length; i++){
+            //                 fastenerModel[i].isVisible = false
+            //             }
+            //             //播放按钮
+            //             var playButton = new BABYLON.GUI.HolographicButton("play");
+            //             manager.addControl(playButton);
+            //             playButton.position =new BABYLON.Vector3(-5,0,-38);
+            //             var playText = new BABYLON.GUI.TextBlock();
+            //             playText.text = "播放";
+            //             playText.color = "White";
+            //             playText.fontSize = 50;
+            //             playButton.content = playText;
+            //             playButton.scaling = new BABYLON.Vector3(0.4,0.4,0.4)     
+            //             playButton.onPointerUpObservable.add(function(){
+            //                 //站立人物模型隐藏
+            //                 for(let i=0; i<idleModel.length; i++){
+            //                     idleModel[i].isVisible = false
+            //                 }
+            //                 //扣件人物模型显示
+            //                 for(let i=0; i<fastenerModel.length; i++){
+            //                     fastenerModel[i].isVisible = true
+            //                 }
+            //             })
+            //             //考评按钮
+            //             var testButton = new BABYLON.GUI.HolographicButton("test");
+            //             manager.addControl(testButton);
+            //             testButton.position =new BABYLON.Vector3(-4,-1,-38);
+            //             var testText = new BABYLON.GUI.TextBlock();
+            //             testText.text = "考评";
+            //             testText.color = "White";
+            //             testText.fontSize = 50;
+            //             testButton.content = testText;
+            //             testButton.scaling = new BABYLON.Vector3(0.4,0.4,0.4)     
+            //             testButton.onPointerUpObservable.add(function(){
+            //                 motionPlane.isVisible = true
+            //                 pauseButton.isVisible = true
+            //                 for(let i=0; i<fastenerModel.length; i++){
+            //                     fastenerModel[i].isVisible = false
+            //                 }
+            //             })
+            //         })
+                
+            // })
+
+            
+
+            // 创建默认的环境
+            var environment = scene.createDefaultEnvironment({groundSize:1000, createSkybox: false }); //取消显示地面（下面会创建），天空盒的大小设置与地面相同
+            environment.ground.position.y+= -10
+
+            //生成天空盒
+            var skyMaterial = new BABYLON.SkyMaterial("skyMaterial", scene);
+            skyMaterial.backFaceCulling = false;
+            var skybox = BABYLON.Mesh.CreateBox("skyBox", 1000.0, scene);
+            skybox.material = skyMaterial;
+            skyMaterial.useSunPosition = true; // Do not set sun position from azimuth and inclination
+            skyMaterial.sunPosition = new BABYLON.Vector3(0, 100, 0)
+
+            //模式选择
+            var moduleChoosePlane = BABYLON.Mesh.CreatePlane("plane", 3); //模式选择的平面
+            moduleChoosePlane.position = new BABYLON.Vector3(0,3,5);
+            moduleChoosePlane.isVisible = true //是否显示在这里
+            //Module Choose Advanced Texture
+            var moduleChooseAdvancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(moduleChoosePlane);
+            var moduleChoosetext = new BABYLON.GUI.TextBlock();
+            moduleChoosetext.text = "考核模式 01:15:45";
+            moduleChoosetext.color = "orange";
+            moduleChoosetext.fontSize = 125;
+            moduleChooseAdvancedTexture.addControl(moduleChoosetext); 
+
+            //培训须知
+            var touristPlane = BABYLON.Mesh.CreatePlane("plane", 5); 
+            touristPlane.position = new BABYLON.Vector3(0,0,4);
+            //tourist Advanced Texture
+            var touristAdvancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(touristPlane);
+            //tourist rectangle
+            var touristRect = new BABYLON.GUI.Rectangle();
+            touristRect.width = "500px"
+            touristRect.height = "200px";
+            touristRect.cornerRadius = 50;
+            touristRect.color = "Orange";
+            touristRect.thickness = 4;
+            touristRect.background = "white";
+            touristAdvancedTexture.addControl(touristRect);
+            //tourist text
+            var touristTitleText = new BABYLON.GUI.TextBlock();
+            touristTitleText.text = "培训须知"
+            touristTitleText.color = "orange"
+            touristTitleText.width = "300px"
+            touristTitleText.fontSize = 40
+            touristTitleText.top = "-60px"
+            touristRect.addControl(touristTitleText); 
+            var touristText = new BABYLON.GUI.TextBlock();
+            touristText.text = "培训内容：熟悉道岔及尖轨扣件组成，大接头双口螺栓型号、安装方法\n有效掌握道岔双头螺栓的维修及抢修作业           \n\n适用范围：在岗员工                                                                             \n\n适用岗位：线路工                                                                                 ";
+            touristText.color = "black";
+            touristText.width = "500px";
+            touristText.fontSize = 15;
+            touristText.top = "40px"
+            touristRect.addControl(touristText);
+
+
+
+
+            //操作动作指引
+            var motionPlane = BABYLON.Mesh.CreatePlane("plane", 5); 
+            motionPlane.position = new BABYLON.Vector3(0,0,4);
+            motionPlane.isVisible = false //是否显示在这里
+            //motion Advanced Texture
+            var motionAdvancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(motionPlane);
+            //motion rectangle
+            var motionRect = new BABYLON.GUI.Rectangle();
+            motionRect.width = "300px"
+            motionRect.height = "100px";
+            motionRect.cornerRadius = 30;
+            motionRect.color = "Orange";
+            motionRect.thickness = 4;
+            motionRect.background = "white";
+            motionAdvancedTexture.addControl(motionRect);
+            //motion text
+            var motionText = new BABYLON.GUI.TextBlock();
+            motionText.text = "使用冲击扳手拆除螺栓"
+            motionText.color = "black"
+            motionText.width = "250px"
+            motionText.fontSize = 25
+            motionText.top = "-20px"
+            // touristTitleText.top = "-60px"
+            motionRect.addControl(motionText); 
+            var motion2Text = new BABYLON.GUI.TextBlock();
+            motion2Text.text = "请完成指定动作..."
+            motion2Text.color = "green"
+            motion2Text.width = "250px"
+            motion2Text.fontSize = 22
+            motion2Text.top = "20px"
+            // touristTitleText.top = "-60px"
+            motionRect.addControl(motion2Text); 
+            
+
+
+
+            //倒数
+            var countBackwardsPlane = BABYLON.Mesh.CreatePlane("plane", 3); 
+            countBackwardsPlane.position = new BABYLON.Vector3(0,0,4);
+            countBackwardsPlane.isVisible = false //是否显示在这里
+            //countBackwards Advanced Texture
+            var countBackwardsAdvancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(countBackwardsPlane);
+            //countBackwards rectangle
+            var countBackwardsRect = new BABYLON.GUI.Rectangle();
+            countBackwardsRect.width = "130px"
+            countBackwardsRect.height = "130px";
+            countBackwardsRect.cornerRadius = 30;
+            countBackwardsRect.color = "Orange";
+            countBackwardsRect.thickness = 4;
+            countBackwardsRect.background = "white";
+            countBackwardsAdvancedTexture.addControl(countBackwardsRect);
+            //countBackwards text
+            var countBackwardsText = new BABYLON.GUI.TextBlock();
+            countBackwardsText.text = backwardsCount.toString()
+            countBackwardsText.color = "black"
+            countBackwardsText.width = "100px"
+            countBackwardsText.fontSize = 75
+            countBackwardsRect.addControl(countBackwardsText)
+            
+
+
+
+
+            //显示分数
+            var gradePlane = BABYLON.Mesh.CreatePlane("plane", 3); 
+            gradePlane.position = new BABYLON.Vector3(0,0,4);
+            gradePlane.isVisible = false //是否显示在这里
+            //Grade Advanced Texture
+            var gradeAdvancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(gradePlane);
+            //Grade rectangle
+            var gradeRect = new BABYLON.GUI.Rectangle();
+            gradeRect.width = "300px"
+            gradeRect.height = "150px";
+            gradeRect.cornerRadius = 30;
+            gradeRect.color = "Orange";
+            gradeRect.thickness = 4;
+            gradeRect.background = "white";
+            gradeAdvancedTexture.addControl(gradeRect);
+            //grade text
+            var gradeText = new BABYLON.GUI.TextBlock();
+            gradeText.text = "你的分数是：80\n\n改正建议："
+            gradeText.color = "black"
+            gradeText.width = "300px"
+            gradeText.fontSize = 30
+            gradeRect.addControl(gradeText)
+            /*
+            socket.on("grade", function(data){
+                console.log(data)
+                gradePlane.isVisible = true
+            })*/
+
+            //关闭按钮触发函数
+            toolsButton.onPointerUpObservable.add(function(){
+                touristPlane.isVisible = false
+                toolsButton.isVisible = false
+            })
+
+            
+            // XR启动
+            const xr = await scene.createDefaultXRExperienceAsync({
+                floorMeshes: [environment.ground] //设置地面为可传送平面
+            });
+
+            //设置GUI跟踪XR摄像机
+            xr.baseExperience.sessionManager.onXRSessionInit.add(() => {
+                returnButton.linkToTransformNode(xr.baseExperience.camera);
+                moduleChoosePlane.parent = xr.baseExperience.camera
+                toolsButton.linkToTransformNode(xr.baseExperience.camera);
+                pauseButton.linkToTransformNode(xr.baseExperience.camera);
+                gradePlane = xr.baseExperience.camera;
+                countBackwardsPlane = xr.baseExperience.camera
+                touristPlane.parent = xr.baseExperience.camera
+                motionPlane.parent = xr.baseExperience.camera
+            })
+
+            //设置GUI跟踪PC摄像机
+            returnButton.linkToTransformNode(camera)
+            moduleChoosePlane.parent = camera
+            toolsButton.linkToTransformNode(camera);
+            pauseButton.linkToTransformNode(camera);
+            countBackwardsPlane.parent = camera
+            touristPlane.parent = camera
+            motionPlane.parent = camera
+            gradePlane.parent = camera
+            return scene;
+        
+        };
+                var engine;
+                var scene;
+                initFunction = async function() {               
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();};
+        initFunction().then(() => {scene.then(returnedScene => { sceneToRender = returnedScene; });
+                
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

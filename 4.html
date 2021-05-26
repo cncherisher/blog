@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = async function () {
+    var scene = new BABYLON.Scene(engine);
+    
+    var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI/2, Math.PI / 3, 25, BABYLON.Vector3.Zero(), scene);
+	camera.attachControl(canvas, true);
+
+    var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+	light.intensity = 0.7;
+
+    //Create advance texture
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
+    advancedTexture.idealWidth = 1600;
+    advancedTexture.renderAtIdealSize = true;
+    if( window.innerWidth < 500 ) {
+        await advancedTexture.parseFromSnippetAsync("E92W52");
+        return scene;
+    }
+    
+    await advancedTexture.parseFromSnippetAsync("I59XFB#11");
+
+    var currentIndex = 4;
+    var captions = [
+    "\"Baby don't hurt me\"",
+    "\"An existentially sad dog\"", 
+    "\"Help, I did my makeup wrong\"",
+    "\"Sharkbait OooHaHa\"",
+    "\"An uncomfortable position\""];
+
+    var titles = [
+        "What is Love?",
+        "Meow",
+        "Colors of the Wind",
+        "Sharkbait",
+        "Tightrope"
+    ]
+
+    //Create gradient background
+    var rect1 = new GradientRectangle();
+    rect1.gradientVertical = true;
+    rect1.gradientStart = "white";
+    rect1.gradientEnd = "#BBB";
+    advancedTexture.addControl(rect1);
+
+    let children = advancedTexture.getChildren()[0].children;
+    var title = children.filter(control => control.name === "Title")[0];
+    var caption = children.filter(control => control.name === "Caption")[0];
+
+    var nextButton = children.filter(control => control.name === "Next")[0];
+    var backButton = children.filter(control => control.name === "Back")[0];
+    var mainPainting = children.filter(control => control.name === "MainPainting")[0];
+    var paintings = children.filter(control => control.name === "Painting");
+    var background = children.filter(control => control.name === "Background")[0];
+
+    /*for(let i = 0; i < paintings.length; ++i)
+    {
+        paintings[i].onPointerClickObservable.add((evt) => {
+            addshadow(paintings[currentIndex], 0);
+            currentIndex = i;
+            caption.text = captions[currentIndex];
+            title.text = titles[currentIndex];
+            mainPainting.source = paintings[currentIndex].source;
+            addshadow(paintings[currentIndex], 5);
+            resetZoom();
+        });
+    }*/
+
+    var view = children.filter(control => control.name === "View")[0];
+    caption.text = captions[currentIndex];
+
+    function addshadow(painting, value) {     
+        painting.shadowOffsetX = value;
+        painting.shadowOffsetY = value;
+        painting.shadowBlur = value;
+    }
+    nextButton.onPointerClickObservable.add((evt) => {
+        addshadow(paintings[currentIndex], 0);
+        currentIndex++;
+        if(currentIndex >= captions.length) currentIndex = 0;
+        caption.text = captions[currentIndex];
+        title.text = titles[currentIndex];
+        mainPainting.source = paintings[currentIndex].source;
+        addshadow(paintings[currentIndex], 5);
+        resetZoom();
+    });
+
+    backButton.onPointerClickObservable.add((evt) => {
+        addshadow(paintings[currentIndex], 0);
+        currentIndex--;
+        if(currentIndex < 0) currentIndex =  captions.length-1;
+        caption.text = captions[currentIndex];
+        title.text = titles[currentIndex];
+        mainPainting.source = paintings[currentIndex].source;
+        addshadow(paintings[currentIndex], 5);
+        resetZoom();
+    });
+
+    background.onPointerClickObservable.add((evt) => {
+        resetZoom();
+    });
+
+    var defaultPosX = mainPainting.leftInPixels;
+    var defaultPosY = mainPainting.topInPixels;
+    view.onPointerClickObservable.add((evt) => {
+        mainPainting.scaleX = 0.35;
+        mainPainting.scaleY = 0.35;
+        mainPainting.zIndex = 5;
+        mainPainting.leftInPixels = 0;
+        mainPainting.topInPixels = 0;
+        mainPainting.shadowBlur = 500;
+        background.background = "black";
+        background.zIndex = 3;
+        background.alpha = 0.3;
+    });
+
+    function resetZoom() {     
+        mainPainting.scaleX = 0.15;
+        mainPainting.scaleY = 0.15;
+        mainPainting.leftInPixels = defaultPosX;
+        mainPainting.topInPixels = defaultPosY;
+        mainPainting.shadowBlur = 0;
+        background.alpha = 0.0;
+        background.zIndex = 0;
+    }
+    return scene;
+};
+
+class GradientRectangle extends BABYLON.GUI.Rectangle {
+    constructor(name){
+        super(name);
+        this._gradientStart = "black";
+        this._gradientEnd = "white"
+        this._gradientVertical = true;
+    }
+    set gradientStart(value) {
+        this._gradientStart = value;
+    }
+    get gradientStart() {
+        return this._gradientStart;
+    }
+    set gradientEnd(value) {
+        this._gradientEnd = value;
+    }
+    get gradientEnd() {
+        return this._gradientEnd;
+    }
+    set gradientVertical(value) {
+        this._gradientVertical = value ? true : false;
+    }
+    get gradientVertical() {
+        return this._gradientVertical;
+    }
+
+    _localDraw(context/*: CanvasRenderingContext2D*/) {
+        context.save();
+
+        if (this.shadowBlur || this.shadowOffsetX || this.shadowOffsetY) {
+            context.shadowColor = this.shadowColor;
+            context.shadowBlur = this.shadowBlur;
+            context.shadowOffsetX = this.shadowOffsetX;
+            context.shadowOffsetY = this.shadowOffsetY;
+        }
+
+        if (this._gradientStart && this._gradientEnd) {
+            if(this._gradientVertical){
+                this._gradient = context.createLinearGradient(0, this._currentMeasure.top, 0, this._currentMeasure.top + this._currentMeasure.height);
+            }
+            else {
+                this._gradient = context.createLinearGradient(this._currentMeasure.left, 0, this._currentMeasure.left + this._currentMeasure.width, 0);
+            }
+            
+            this._gradient.addColorStop(0, this._gradientStart);
+            this._gradient.addColorStop(1, this._gradientEnd);
+
+            context.fillStyle = this._gradient;
+
+            if (this._cornerRadius) {
+                this._drawRoundedRect(context, this._thickness / 2);
+                context.fill();
+            } else {
+                context.fillRect(this._currentMeasure.left, this._currentMeasure.top, this._currentMeasure.width, this._currentMeasure.height);
+            }
+        }
+
+        if (this._thickness) {
+            if (this.shadowBlur || this.shadowOffsetX || this.shadowOffsetY) {
+                context.shadowBlur = 0;
+                context.shadowOffsetX = 0;
+                context.shadowOffsetY = 0;
+            }
+
+            if (this.color) {
+                context.strokeStyle = this.color;
+            }
+            context.lineWidth = this._thickness;
+
+            if (this._cornerRadius) {
+                this._drawRoundedRect(context, this._thickness / 2);
+                context.stroke();
+            } else {
+                context.strokeRect(this._currentMeasure.left + this._thickness / 2, this._currentMeasure.top + this._thickness / 2,
+                    this._currentMeasure.width - this._thickness, this._currentMeasure.height - this._thickness);
+            }
+        }
+
+        context.restore();
+    }
+}
+
+                var engine;
+                var scene;
+                initFunction = async function() {               
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();};
+        initFunction().then(() => {scene.then(returnedScene => { sceneToRender = returnedScene; });
+                
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

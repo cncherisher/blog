@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        
+        var createScene = function () {
+        
+           
+        
+            engine.enableOfflineSupport = false;
+        
+            // 启用物理引擎
+            var scene = new BABYLON.Scene(engine);
+        	var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
+			var physicsPlugin = new BABYLON.CannonJSPlugin();
+			scene.enablePhysics(gravityVector, physicsPlugin);
+			
+
+
+			//var camera1 = new BABYLON.WebVRFreeCamera("camera1", new BABYLON.Vector3(100, , 0), scene);
+            var camera1 = new BABYLON.ArcRotateCamera("camera1", 10, 0, 0, new BABYLON.Vector3(0, 0, 0), scene);
+            //var camera1 = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 0, -2), scene);
+            
+            scene.activeCamera = camera1;
+            scene.activeCamera.attachControl(canvas, true);
+            camera1.lowerRadiusLimit = 1.3;
+            //camera1.upperRadiusLimit = 50000;
+            //camera1.wheelDeltaPercentage = 0.01;
+        
+            // Lights
+            var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0, -0.5, 1.0), scene);
+    		light.position = new BABYLON.Vector3(0, 5, -2);
+
+        	var environment = scene.createDefaultEnvironment({ enableGroundShadow: true, groundYBias: 1 });
+   			environment.setMainColor(BABYLON.Color3.FromHexString("#ffffff"))
+            environment._ground._position=new BABYLON.Vector3(0,-500,0)
+               //console.log(environment)
+           
+        
+            // GUI
+            var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            var instructions = new BABYLON.GUI.TextBlock();
+            instructions.text = " ";
+            instructions.color = "white";
+            instructions.fontSize = 16;
+            instructions.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT
+            instructions.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+            advancedTexture.addControl(instructions);
+        
+        	//var environment = scene.createDefaultEnvironment({ enableGroundShadow: true, groundYBias: 2 });
+    		//environment.setMainColor(BABYLON.Color3.FromHexString("#74b9ff"))
+            // Ground
+            var vrHelper = scene.createDefaultVRExperience({createDeviceOrientationCamera:false});
+    		vrHelper.enableTeleportation({ floorMeshName: "camera1" });
+
+
+            /*var ground = BABYLON.MeshBuilder.CreateGround("ground", { height: 500, width: 500, subdivisions: 4 }, scene);
+            var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            groundMaterial.diffuseTexture = new BABYLON.Texture("textures/wood.jpg", scene);
+            groundMaterial.diffuseTexture.uScale = 30;
+            groundMaterial.diffuseTexture.vScale = 30;
+            groundMaterial.specularColor = new BABYLON.Color3(.1, .1, .1);
+            ground.material = groundMaterial;*/
+            
+
+            //按钮1，下一步
+            var num=0;
+            var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+            var button = BABYLON.GUI.Button.CreateSimpleButton("button", "下一步");
+            button.top = "-200px";
+            button.left = "400px";
+            button.width = "150px";
+            button.height = "50px";
+            button.cornerRadius = 20;
+            button.thickness = 4;
+            button.children[0].color = "#DFF9FB";
+            button.children[0].fontSize = 24;
+            button.color = "#FF7979";
+            button.background = "#EB4D4B";
+        	gui.addControl(button);     //激活按钮
+            //按钮2：上一步
+            var gui2 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+            var button2 = BABYLON.GUI.Button.CreateSimpleButton("button", "上一步");
+            button2.top = "-100px";
+            button2.left = "400px";
+            button2.width = "150px";
+            button2.height = "50px";
+            button2.cornerRadius = 20;
+            button2.thickness = 4;
+            button2.children[0].color = "#DFF9FB";
+            button2.children[0].fontSize = 24;
+            button2.color = "#FF7979";
+            button2.background = "#EB4D4B";
+        	gui2.addControl(button2);     //激活按钮
+
+            //按钮3：重置
+            var gui3 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+            var button3 = BABYLON.GUI.Button.CreateSimpleButton("button", "重置");
+            button3.top = "0px";
+            button3.left = "400px";
+            button3.width = "150px";
+            button3.height = "50px";
+            button3.cornerRadius = 20;
+            button3.thickness = 4;
+            button3.children[0].color = "#DFF9FB";
+            button3.children[0].fontSize = 24;
+            button3.color = "#FF7979";
+            button3.background = "#EB4D4B";
+        	gui3.addControl(button3);     //激活按钮
+
+
+            //动画设置：
+            const frameRate = 2;
+            const xSlide = new BABYLON.Animation("xSlide", "position.x", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            const keyFrames = [];
+
+            keyFrames.push({
+                frame: 0,
+                value:3,
+            });
+
+            keyFrames.push({
+                frame: frameRate,
+                value: 1,
+            });
+
+            keyFrames.push({
+                frame: 2 * frameRate,
+                value: 0,
+            });
+            xSlide.setKeys(keyFrames);
+
+            const xSlide2 = new BABYLON.Animation("xSlide1", "position.x", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            const keyFrames2 = [];
+
+            keyFrames2.push({
+                frame: 0,
+                value:0,
+            });
+
+            keyFrames2.push({
+                frame: frameRate,
+                value: 1,
+            });
+
+            keyFrames2.push({
+                frame: 2 * frameRate,
+                value: 3,
+            });
+            
+            xSlide2.setKeys(keyFrames2);
+            var numberMax=0;
+            Whole_obj=[]
+            var sv = new BABYLON.GUI.ScrollViewer();
+            sv.width = 0.2;
+            sv.height = 0.2;
+            sv.background = "#CCCCCC";
+            sv.top= -200;
+            sv.left=-200;
+            advancedTexture.addControl(sv);
+
+            var rc = new BABYLON.GUI.Rectangle();
+            rc.thickness = 0.1;
+            rc.width = 1;
+            rc.height = 1;
+            rc.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            rc.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            rc.color = "red";
+            rc.background = "white";
+
+            sv.addControl(rc);
+
+            var image = new BABYLON.GUI.Image("but", "textures/TEX/1.jpg");
+            image.width = 0.8;
+            image.height = 0.8;
+            rc.addControl(image); 
+            button.onPointerUpObservable.add(function() {
+                
+                if(num<34){
+                    num=num+1;
+                    BABYLON.SceneLoader.ImportMesh("","","GLB2/"+num+".glb",scene,function(res){
+                        console.log("导入成功");
+                        console.log(num);
+                        
+                        //res[1].isVisible=false;
+                        /*if(num!=8){
+                            for(var i =1;i<res.length;i++)
+                            {
+                                //res[i].isVisible=false;
+                                
+                                //res[i]._material.alpha=0.3;
+                                
+                                
+                            }
+                        }*/
+                        console.log(scene);
+                        console.log(res);
+                        Whole_obj.push(res[0])
+                        res[0].animations.push(xSlide);
+                        scene.beginAnimation(res[0],0, 2 * frameRate, true);
+                        }); 
+                 }
+                 else
+                 {
+                    var gui4 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+                    var button4 = BABYLON.GUI.Button.CreateSimpleButton("button", "菜单");
+                    button4.top = "100px";
+                    button4.left = "400px";
+                    button4.width = "150px";
+                    button4.height = "50px";
+                    button4.cornerRadius = 20;
+                    button4.thickness = 4;
+                    button4.children[0].color = "#DFF9FB";
+                    button4.children[0].fontSize = 24;
+                    button4.color = "#FF7979";
+                    button4.background = "#EB4D4B";
+                    gui4.addControl(button4);
+                    button4.onPointerUpObservable.add(function(){
+                        creatButton();
+                     })
+                 }
+                var image = new BABYLON.GUI.Image("but", "textures/TEX/"+(num+1)+".jpg");
+                image.width = 0.8;
+                image.height = 0.8;
+                rc.addControl(image); 
+            });
+            button2.onPointerUpObservable.add(function() {
+                
+                obj=Whole_obj[num-1];
+                console.log(Whole_obj)
+                //obj.animations.push(xSlide2);
+                scene.beginAnimation(obj,0,2*frameRate,true)
+                
+                
+            
+            });
+            button3.onPointerUpObservable.add(function(){
+                location.reload();
+            });
+           
+
+
+            var creatButton = function(){
+                console.log(scene)
+                    var gui5 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+                    var button5 = BABYLON.GUI.Button.CreateSimpleButton("button", "角马");
+                    button5.top = "-300px";
+                    button5.left = "600px";
+                    button5.width = "75px";
+                    button5.height = "50px";
+                    button5.cornerRadius = 20;
+                    button5.thickness = 4;
+                    button5.children[0].color = "#DFF9FB";
+                    button5.children[0].fontSize = 24;
+                    button5.color = "#FF7979";
+                    button5.background = "#EB4D4B";
+                    gui5.addControl(button5);
+            };
+            button5.onPointerUpObservable.add(function(){
+                OBJ=scene.geometries;
+                for(var i = 5 ; i<76;i++)
+                {
+                    if(i<56)
+                    {
+                        for(j=0;j<scene.geometries[i]._mesh.length;j++)
+                        {
+                            scene.geometries[i]._mesh.isVisible=false;
+                        }
+                        
+                    }
+
+                }
+            });
+            
+            //const xrHelper = await scene.createDefaultXRExperienceAsync();
+            return scene
+        }
+                var engine;
+                var scene;
+                initFunction = async function() {               
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();};
+        initFunction().then(() => {sceneToRender = scene        
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

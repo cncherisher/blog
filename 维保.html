@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<!-- saved from url=(0028)http://106.12.19.82/car.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script> <!--pep操作插件-->
+
+        
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    <style>.babylonVRicon { position: absolute; right: 20px; height: 50px; width: 80px; background-color: rgba(51,51,51,0.7); background-image: url(data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%222048%22%20height%3D%221152%22%20viewBox%3D%220%200%202048%201152%22%20version%3D%221.1%22%3E%3Cpath%20transform%3D%22rotate%28180%201024%2C576.0000000000001%29%22%20d%3D%22m1109%2C896q17%2C0%2030%2C-12t13%2C-30t-12.5%2C-30.5t-30.5%2C-12.5l-170%2C0q-18%2C0%20-30.5%2C12.5t-12.5%2C30.5t13%2C30t30%2C12l170%2C0zm-85%2C256q59%2C0%20132.5%2C-1.5t154.5%2C-5.5t164.5%2C-11.5t163%2C-20t150%2C-30t124.5%2C-41.5q23%2C-11%2042%2C-24t38%2C-30q27%2C-25%2041%2C-61.5t14%2C-72.5l0%2C-257q0%2C-123%20-47%2C-232t-128%2C-190t-190%2C-128t-232%2C-47l-81%2C0q-37%2C0%20-68.5%2C14t-60.5%2C34.5t-55.5%2C45t-53%2C45t-53%2C34.5t-55.5%2C14t-55.5%2C-14t-53%2C-34.5t-53%2C-45t-55.5%2C-45t-60.5%2C-34.5t-68.5%2C-14l-81%2C0q-123%2C0%20-232%2C47t-190%2C128t-128%2C190t-47%2C232l0%2C257q0%2C68%2038%2C115t97%2C73q54%2C24%20124.5%2C41.5t150%2C30t163%2C20t164.5%2C11.5t154.5%2C5.5t132.5%2C1.5zm939%2C-298q0%2C39%20-24.5%2C67t-58.5%2C42q-54%2C23%20-122%2C39.5t-143.5%2C28t-155.5%2C19t-157%2C11t-148.5%2C5t-129.5%2C1.5q-59%2C0%20-130%2C-1.5t-148%2C-5t-157%2C-11t-155.5%2C-19t-143.5%2C-28t-122%2C-39.5q-34%2C-14%20-58.5%2C-42t-24.5%2C-67l0%2C-257q0%2C-106%2040.5%2C-199t110%2C-162.5t162.5%2C-109.5t199%2C-40l81%2C0q27%2C0%2052%2C14t50%2C34.5t51%2C44.5t55.5%2C44.5t63.5%2C34.5t74%2C14t74%2C-14t63.5%2C-34.5t55.5%2C-44.5t51%2C-44.5t50%2C-34.5t52%2C-14l14%2C0q37%2C0%2070%2C0.5t64.5%2C4.5t63.5%2C12t68%2C23q71%2C30%20128.5%2C78.5t98.5%2C110t63.5%2C133.5t22.5%2C149l0%2C257z%22%20fill%3D%22white%22%20/%3E%3C/svg%3E%0A); background-size: 80%; background-repeat:no-repeat; background-position: center; border: none; outline: none; transition: transform 0.125s ease-out } .babylonVRicon:hover { transform: scale(1.05) } .babylonVRicon:active {background-color: rgba(51,51,51,1) } .babylonVRicon:focus {background-color: rgba(51,51,51,1) }.babylonVRicon.vrdisplaypresenting { display: none; }</style></head>
+<body>
+    <canvas id="renderCanvas" width="100%" height="100%" touch-action="none" tabindex="1" style="touch-action: none;"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        
+        var createScene = function () {
+        
+           
+        
+            engine.enableOfflineSupport = false;
+        
+            // 启用物理引擎
+            var scene = new BABYLON.Scene(engine);
+        	var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
+			var physicsPlugin = new BABYLON.CannonJSPlugin();
+			scene.enablePhysics(gravityVector, physicsPlugin);
+			
+
+
+			//var camera1 = new BABYLON.WebVRFreeCamera("camera1", new BABYLON.Vector3(100, , 0), scene);
+            var camera = new BABYLON.FreeCamera("Camera1", new BABYLON.Vector3(-5, 0, -195), scene);
+            //var camera = new BABYLON.VRDeviceOrientationFreeCamera("DevOr_camera", new BABYLON.Vector3(-5, 5, -195), scene);
+            //var camera = new BABYLON.ArcRotateCamera("Camera", -5, -5, -195, new BABYLON.Vector3(-7, -5, -201), scene);
+            console.log(camera)
+            // 设置相机目标
+            camera.setTarget(new BABYLON.Vector3(-5,-5,-201));
+            // 相机设置被canvas控制
+            camera.attachControl(canvas, true);
+            //var camera1 = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 0, -2), scene);
+            
+            //scene.activeCamera = camera;
+            //scene.activeCamera.attachControl(canvas, true);
+            //camera.lowerRadiusLimit = 1.3;
+            //camera1.upperRadiusLimit = 50000;
+            //camera1.wheelDeltaPercentage = 0.01;
+        
+            // Lights
+            var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0, -0.5, 1.0), scene);
+    		light.position = new BABYLON.Vector3(0, 5, -2);
+            //创建默认环境
+        	var environment = scene.createDefaultEnvironment({groundSize:1000, createSkybox: false }); //取消显示地面（下面会创建），天空盒的大小设置与地面相同
+            environment.ground.position.y+= -30
+
+
+            //生成天空盒
+            var skyMaterial = new BABYLON.SkyMaterial("skyMaterial", scene);
+            skyMaterial.backFaceCulling = false;
+            var skybox = BABYLON.Mesh.CreateBox("skyBox", 1000.0, scene);
+            skybox.material = skyMaterial;
+            skyMaterial.useSunPosition = true; // Do not set sun position from azimuth and inclination
+            skyMaterial.sunPosition = new BABYLON.Vector3(0, 100, 0)
+
+            /*
+            var moduleChoosePlane = BABYLON.Mesh.CreatePlane("plane", 3); //模式选择的平面
+            moduleChoosePlane.position = new BABYLON.Vector3(0,3,5);
+            moduleChoosePlane.isVisible = true //是否显示在这里
+            // GUI*/
+            
+        	
+        	//var environment = scene.createDefaultEnvironment({ enableGroundShadow: true, groundYBias: 2 });
+    		//environment.setMainColor(BABYLON.Color3.FromHexString("#74b9ff"))
+            // Ground
+            var vrHelper = scene.createDefaultVRExperience({createDeviceOrientationCamera:false});
+    		vrHelper.enableTeleportation({ floorMeshName: "camera1" });
+            /*BABYLON.SceneLoader.ImportMesh("","","model/tunnel.glb",scene,function(res){
+                console.log("导入成功");
+            });*/ 
+            var sv = new BABYLON.GUI.ScrollViewer();
+		    sv.thickness = 0;
+		    //sv.color = "RGB";
+		    sv.width = 0.3;
+		    sv.height = 0.2;
+		    sv.background = "White";
+		    sv.top="-250px"
+		    sv.left="-250px"
+			var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+		    advancedTexture.addControl(sv);
+
+		    var tb = new BABYLON.GUI.TextBlock();
+		    tb.textWrapping = true;
+		    
+		    tb.width = 3;
+		    tb.height = 3.5;
+		    tb.paddingTop = "1%";
+		    tb.paddingLeft = "20px";
+		    tb.paddingRight = "20px"
+		    tb.paddingBottom = "1%";
+		    tb.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+		    tb.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+		    tb.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+		    tb.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+		    tb.color = "black";
+
+		    tb.text = "培训内容：熟悉道岔及尖轨扣件组成，大接头双口螺栓型号、安装方法\n有效掌握道岔双头螺栓的维修及抢修作业           \n\n适用范围：在岗员工                                                                             \n\n适用岗位：线路工   ";
+
+		    tb.fontSize = "16px";
+
+		    sv.addControl(tb); 
+
+            BABYLON.SceneLoader.ImportMesh("","","env/隧道.glb",scene,function(res){  //隧道本体
+            	console.log(res);
+            	
+            });
+
+           BABYLON.SceneLoader.ImportMesh("","","env/八磅大锤.glb",scene,function(res,newMeshes){
+           		var chuizi =[]
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：八磅大锤                     \n用途： 对需要调整的钢轨的外侧轨底进行敲击"
+           			}))
+           			chuizi.push(res[i]);
+           			
+           			
+           		}
+
+           		var gizmoManager = new BABYLON.GizmoManager(scene)
+    			
+				gizmoManager.boundingBoxGizmoEnabled = true;
+    			gizmoManager.attachableMeshes = chuizi
+    			console.log("gizmoManager")
+    			console.log(gizmoManager)
+    			/*
+    			var gizmo = new BABYLON.BoundingBoxGizmo(BABYLON.Color3.FromHexString("#0984e3"))
+    			gizmo.ignoreChildren = true;
+    			var gltfMesh = res[0]
+        		var bb = BABYLON.BoundingBoxGizmo.MakeNotPickableAndWrapInBoundingBox(gltfMesh)
+
+       			gizmo.attachedMesh = bb;*/
+
+
+
+
+           		
+           })
+            	
+            BABYLON.SceneLoader.ImportMesh("","","env/道尺.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：道尺                     \n用途： 测量回检轨道"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/电压表.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：电压表                     \n用途： 测量绝缘接头处各螺栓与钢轨间的电压值"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/方尺.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：方尺                     \n用途： 核查两股钢轨轨缝错位量（标准为：每千米轨缝总\n误差：25m钢轨地段不得大于±80mm ，12.5m钢轨地段不得\n大于±160mm）"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+            
+            BABYLON.SceneLoader.ImportMesh("","","env/钢丝刷.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：钢丝刷                     \n用途： 清除夹板及钢轨铁锈"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/轨缝尺.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：轨缝尺                     \n用途： 测量普通接头轨缝值"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/活动扳手.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：活动扳手                     \n用途： 紧固和起送螺母"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/加力扳手.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：加力扳手                     \n用途： 拧紧螺栓"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/绝缘尺.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：绝缘尺                     \n用途： 监测轨缝值，测量绝缘接头、普通接头轨缝"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/毛刷.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：毛刷                     \n用途： 清理干净绝缘部件"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/石笔.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：石笔                     \n用途： 在钢轨上划出钢轨的串动量、串动方向"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","env/套筒扳手.glb",scene,function(res,newMeshes){
+           		for (var i = res.length - 1; i >= 0; i--) {
+           			res[i].actionManager =  new BABYLON.ActionManager(scene);
+           			res[i].actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger,function(){
+           				tb.text="                     名称：套筒扳手                     \n用途： 拧松需调整钢轨的扣件螺栓，安装钢轨扣件螺栓"
+           			}))
+           		}
+           		console.log(res)
+           		
+           })
+
+            BABYLON.SceneLoader.ImportMesh("","","model/qiang.glb",scene,function(res,newMeshes){   //导入人物
+            	var hero = newMeshes[0];
+               	for (var i = newMeshes.length - 1; i >= 0; i--) {
+                	newMeshes[i]._scaling=new BABYLON.Vector3(1200,1200,1200)
+                }
+                //newMeshes[0]._scal
+               	//hero.scaling.scaleInPlace(0.1);
+        
+                //Lock camera on the character 
+                const walkAnim = scene.getAnimationGroupByName("All Animations");
+                //const walkBackAnim = scene.getAnimationGroupByName("WalkingBack");
+                
+
+                //camera1.target = hero;
+                //console.log(scene);
+                //console.log(newMeshes);
+
+                var Point=1;
+                var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+                var button1 = BABYLON.GUI.Button.CreateSimpleButton("button","播放");
+                button1.top = "-200px";
+                button1.left = "400px";
+                button1.width = "150px";
+                button1.height = "50px";
+                button1.cornerRadius = 20;
+	            button1.thickness = 4;
+	            button1.children[0].color = "#DFF9FB";
+	            button1.children[0].fontSize = 24;
+	            button1.color = "#FF7979";
+	            button1.background = "#EB4D4B";
+	        	gui.addControl(button1);     
+			    button1.onPointerUpObservable.add(function() {
+
+			    	Point = !Point
+
+			    	if (Point) {
+			    		
+			    		walkAnim.start();
+			    		//idleAnim.stop()
+			    	}
+			    	if(!Point)
+			    	{
+			    		walkAnim.stop()
+			    		//idleAnim.start(true, 1.0, idleAnim.from, idleAnim.to, false);
+			    	}
+
+			        
+			    });
+			                })
+                     
+            
+
+            //按钮1，下一步
+            
+            
+            
+            const xrHelper = scene.createDefaultXRExperienceAsync();
+            /*const xr = scene.createDefaultXRExperienceAsync({
+                floorMeshes: [environment.ground] //设置地面为可传送平面
+            });
+
+            //设置GUI跟踪XR摄像机
+            xr.baseExperience.sessionManager.onXRSessionInit.add(() => {
+                returnButton.linkToTransformNode(xr.baseExperience.camera);
+                moduleChoosePlane.parent = xr.baseExperience.camera
+                toolsButton.linkToTransformNode(xr.baseExperience.camera);
+                pauseButton.linkToTransformNode(xr.baseExperience.camera);
+                gradePlane = xr.baseExperience.camera;
+                countBackwardsPlane = xr.baseExperience.camera
+                touristPlane.parent = xr.baseExperience.camera
+                motionPlane.parent = xr.baseExperience.camera
+            })
+
+            //设置GUI跟踪PC摄像机
+            returnButton.linkToTransformNode(camera)
+            moduleChoosePlane.parent = camera
+            toolsButton.linkToTransformNode(camera);
+            pauseButton.linkToTransformNode(camera);
+            countBackwardsPlane.parent = camera
+            touristPlane.parent = camera
+            motionPlane.parent = camera
+            gradePlane.parent = camera*/
+            return scene
+        }
+                var engine;
+                var scene;
+                initFunction = async function() {               
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();};
+        initFunction().then(() => {sceneToRender = scene        
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script><button class="babylonVRicon" id="babylonVRiconbtn" title="Click to switch to VR" style="top: 899px; left: 1820px;"></button>
+
+
+</body></html>
